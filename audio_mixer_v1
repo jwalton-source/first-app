@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Mixer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .mixer-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            border-radius: 5px;
+            padding: 20px;
+        }
+        .fader {
+            width: 100%;
+            height: 200px;
+            background-color: #f0f0f0;
+            position: relative;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .slider {
+            width: 80%;
+            height: 20px;
+            background-color: #007bff;
+            position: absolute;
+            bottom: 0;
+            left: 10%;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .label {
+            text-align: center;
+            margin-top: 5px;
+        }
+        .btn-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="mixer-container">
+        <div class="btn-container">
+            <button id="startButton" class="btn btn-primary mb-3">始める (Initiate)</button>
+            <button id="newStopButton" class="btn btn-danger mb-3">全停止 (Stop All)</button>
+        </div>
+        <div class="row" id="channels-container">
+            <!-- Channels will be dynamically added here -->
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const channelsContainer = document.getElementById('channels-container');
+            const startButton = document.getElementById('startButton');
+            const newStopButton = document.getElementById('newStopButton');
+            const audioSources = [
+                'https://assets.zyrosite.com/AwvrWpyqg6tZNblK/keys-rain-drops-stem-YZ923EO9p9h4Oreb.mp3',
+                'https://assets.zyrosite.com/AwvrWpyqg6tZNblK/keys-main-stem-YD0pJEq0z3CNkke8.mp3',
+                'https://assets.zyrosite.com/AwvrWpyqg6tZNblK/drums-stem-YrDay4MWNqFGw6QE.mp3',
+                'https://assets.zyrosite.com/AwvrWpyqg6tZNblK/picky-guitar-stem-m5KvB83vpVUG51WL.mp3',
+                'https://assets.zyrosite.com/AwvrWpyqg6tZNblK/chug-guitar-stem-YX4PMjrP2GCOz0ae.mp3',
+                'https://assets.zyrosite.com/AwvrWpyqg6tZNblK/guitar-melody-stem-dWxlDL7zlbu4ro8w.mp3'
+            ];
+
+            // Dynamically create channels
+            audioSources.forEach((src, index) => {
+                const channelHtml = `
+                    <div class="col-6 col-md-4 col-lg-2 mb-3">
+                        <div class="fader">
+                            <div class="slider"></div>
+                        </div>
+                        <div class="label">Channel ${index + 1}</div>
+                        <audio src="${src}"></audio>
+                    </div>
+                `;
+                channelsContainer.insertAdjacentHTML('beforeend', channelHtml);
+            });
+
+            const channels = document.querySelectorAll('.col-6');
+            const audioElements = document.querySelectorAll('audio');
+
+            channels.forEach((channel, index) => {
+                const slider = channel.querySelector('.slider');
+                const audio = channel.querySelector('audio');
+                const fader = channel.querySelector('.fader');
+
+                // Set initial position and volume
+                slider.style.bottom = '0px';
+                audio.volume = 0;
+
+                // Make slider draggable
+                let isDragging = false;
+
+                slider.addEventListener('mousedown', () => {
+                    isDragging = true;
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (isDragging) {
+                        const rect = fader.getBoundingClientRect();
+                        let y = rect.bottom - e.clientY;
+                        y = Math.max(0, Math.min(y, rect.height));
+
+                        const volume = y / rect.height;
+                        audio.volume = volume;
+
+                        slider.style.bottom = `${y}px`;
+                    }
+                });
+
+                document.addEventListener('mouseup', () => {
+                    isDragging = false;
+                });
+            });
+
+            // Start button event listener
+            startButton.addEventListener('click', function() {
+                const startTime = Date.now();
+                audioElements.forEach(audio => {
+                    audio.currentTime = 0;
+                    audio.play().then(() => {
+                        const delay = (Date.now() - startTime) / 1000;
+                        if (delay > 0) {
+                            audio.currentTime = delay;
+                        }
+                    }).catch(e => console.log("Audio play failed:", e));
+                });
+                console.log('All audio started/restarted simultaneously');
+            });
+
+            // Stop button event listener
+            newStopButton.addEventListener('click', function() {
+                audioElements.forEach(audio => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                });
+                console.log('All audio stopped');
+            });
+        });
+    </script>
+</body>
+</html>
